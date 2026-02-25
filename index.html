@@ -13,7 +13,9 @@
         .label { font-weight: bold; color: #7f8c8d; font-size: 11px; text-transform: uppercase; display: block; }
         .value { font-size: 17px; color: #34495e; display: block; margin-bottom: 12px; font-weight: bold; border-bottom: 1px solid #dcdde1; padding-bottom: 5px; }
         .value:last-child { border-bottom: none; }
-        .btn { display: inline-block; padding: 12px 25px; background: #27ae60; color: white; text-decoration: none; border-radius: 30px; font-weight: bold; margin-top: 10px; }
+        /* Stile pulsante verde */
+        .btn { display: inline-block; padding: 12px 25px; background: #27ae60; color: white; text-decoration: none; border-radius: 30px; font-weight: bold; margin-top: 10px; border: none; cursor: pointer; }
+        .btn:hover { background: #219150; }
     </style>
 </head>
 <body>
@@ -25,7 +27,8 @@
             <span class="label">Proprietario / Ditta</span>
             <span id="ditta" class="value">---</span>
             
-            <span class="label">ID Cellula e Posizione</span>
+            <span class="label">Comune</span>
+            <span id="comune" class="value">---</span> <span class="label">ID Cellula e Posizione</span>
             <span id="cellula" class="value">---</span>
 
             <span class="label">Numero Autorizzazione</span>
@@ -39,8 +42,12 @@
     </div>
 
     <script>
+        // Recupera i parametri dall'URL
         const params = new URLSearchParams(window.location.search);
+        
+        // Assegna i valori agli ID HTML, decodificando i caratteri speciali
         document.getElementById('ditta').innerText = params.get('ditta') || "---";
+        document.getElementById('comune').innerText = params.get('comune') || "---"; // Nuova riga aggiunta
         document.getElementById('cellula').innerText = params.get('cellula') || "---";
         document.getElementById('protocollo').innerText = params.get('protocollo') || "---";
         document.getElementById('scadenza').innerText = params.get('scadenza') || "---";
