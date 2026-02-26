@@ -67,26 +67,26 @@ for index, row in df.iterrows():
     # 1. DITTA
     pdf.set_font("Helvetica", 'B', 9)
     pdf.set_xy(x_attuale, y_attuale + 18)
-    pdf.multi_cell(40, 4, txt=ditta, align='C') # Usato txt per fpdf2
+    pdf.multi_cell(40, 4, text=ditta, align='C') # Usato txt per fpdf2
     
     y_dopo_ditta = pdf.get_y() + 2 
 
     # 2. COMUNE
     pdf.set_font("Helvetica", 'B', 10)
     pdf.set_xy(x_attuale + 2, y_dopo_ditta)
-    pdf.multi_cell(36, 5, txt=f"Comune: {row['Comune']}", align='L')
+    pdf.multi_cell(36, 5, text=f"Comune: {row['Comune']}", align='L')
     
     y_dopo_comune = pdf.get_y() + 1 
 
     # 3. CELLULA
     pdf.set_font("Helvetica", 'B', 10)
     pdf.set_xy(x_attuale + 2, y_dopo_comune) 
-    pdf.cell(36, 5, txt=f"Cellula: {cellula_info}", align='L')
+    pdf.cell(36, 5, text=f"Cellula: {cellula_info}", align='L')
         
     # 4. DESCRIZIONE
     pdf.set_font("Helvetica", '', 8)
     pdf.set_xy(x_attuale + 2, pdf.get_y() + 6)
-    pdf.multi_cell(36, 3.5, txt=descrizione, align='L')
+    pdf.multi_cell(36, 3.5, text=descrizione, align='L')
     
     # 5. QR CODE
     pdf.image(qr_path, x=x_attuale + 5, y=y_attuale + 68, w=30)
