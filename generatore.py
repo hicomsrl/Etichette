@@ -3,9 +3,16 @@ import qrcode
 from fpdf import FPDF
 import os
 
-# --- 1. SCELTA DEL FILE ---
-nome_input = input("Inserisci il nome del file Excel (es. torino.xlsx): ")
+#--- 1. SCELTA DEL FILE (AUTOMATIZZATA) ---
+# Il file master ora è fisso per evitare richieste manuali ogni volta
+# Percorso di rete sul server HiCom
+nome_input = r"\\192.168.1.13\HiCom\Tecnico\Z_gestione_qrcode\master_noncancellare.xlsx"
 base_name = os.path.splitext(nome_input)[0]
+
+if not os.path.exists(nome_input):
+    print(f"ERRORE: Il file '{nome_input}' non è presente nella cartella!")
+    print("Controlla il nome del file Excel o rinominalo correttamente.")
+    exit()
 
 try:
     df = pd.read_excel(nome_input)
@@ -103,6 +110,6 @@ for index, row in df.iterrows():
             pdf.add_page()
             y_attuale = 10
 
-nome_output_file = f"etichette_{base_name}.pdf"
+nome_output_file = "etichette_master_generato.pdf"
 pdf.output(nome_output_file)
 print(f"PDF GENERATO: {nome_output_file}")
