@@ -83,9 +83,9 @@ for index, row in df.iterrows():
     if os.path.exists('logo.jpg'):
         pdf.image('logo.jpg', x=x_attuale + 7, y=y_attuale + 3, w=26)
 
-    pdf.set_font("Helvetica", 'B', 9)
-    pdf.set_xy(x_attuale, y_attuale + 18)
-    pdf.multi_cell(40, 4, text=ditta, align='C')
+    pdf.set_font("Helvetica", 'B', 8)
+    pdf.set_xy(x_attuale + 2, y_attuale + 18)
+    pdf.multi_cell(36, 4, text=ditta, align='R')
     y_dopo_ditta = pdf.get_y() + 2
 
     pdf.set_font("Helvetica", 'B', 10)
