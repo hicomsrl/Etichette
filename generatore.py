@@ -80,37 +80,45 @@ for index, row in df.iterrows():
 
     pdf.rect(x_attuale, y_attuale, 40, 100)
 
+    # LOGO (alto, compatto)
     if os.path.exists('logo.jpg'):
-        pdf.image('logo.jpg', x=x_attuale + 7, y=y_attuale + 3, w=26)
+        pdf.image('logo.jpg', x=x_attuale + 10, y=y_attuale + 1, w=20)
 
+    # DITTA (8pt B, allineata a destra, max 3 righe)
     pdf.set_font("Helvetica", 'B', 8)
-    pdf.set_xy(x_attuale + 2, y_attuale + 18)
-    pdf.multi_cell(36, 4, text=ditta, align='R')
-    y_dopo_ditta = pdf.get_y() + 2
+    pdf.set_xy(x_attuale + 2, y_attuale + 14)
+    pdf.multi_cell(36, 3.5, text=ditta, align='R')
 
-    pdf.set_font("Helvetica", 'B', 10)
-    pdf.set_xy(x_attuale + 2, y_dopo_ditta)
-    pdf.multi_cell(36, 5, text=f"Ente: {row['Ente']}", align='L')
-    y_dopo_ente = pdf.get_y() + 1
+    # ENTE / COMUNE / CELLULA (9pt B, posizioni fisse)
+    pdf.set_font("Helvetica", 'B', 9)
+    pdf.set_xy(x_attuale + 2, y_attuale + 25)
+    pdf.cell(36, 4, text=f"Ente: {row['Ente']}", align='L')
+    pdf.set_xy(x_attuale + 2, y_attuale + 29)
+    pdf.cell(36, 4, text=f"Comune: {row['Comune']}", align='L')
+    pdf.set_xy(x_attuale + 2, y_attuale + 33)
+    pdf.cell(36, 4, text=f"Cellula: {cellula_info}", align='L')
 
-    pdf.set_font("Helvetica", 'B', 10)
-    pdf.set_xy(x_attuale + 2, y_dopo_ente)
-    pdf.multi_cell(36, 5, text=f"Comune: {row['Comune']}", align='L')
-    y_dopo_comune = pdf.get_y() + 1
+    # INDIRIZZO (7pt, max ~3 righe)
+    pdf.set_font("Helvetica", '', 7)
+    pdf.set_xy(x_attuale + 2, y_attuale + 38)
+    pdf.multi_cell(36, 3, text=descrizione, align='L')
 
-    pdf.set_font("Helvetica", 'B', 10)
-    pdf.set_xy(x_attuale + 2, y_dopo_comune)
-    pdf.cell(36, 5, text=f"Cellula: {cellula_info}", align='L')
+    # BLOCCO AUTORIZZAZIONE (7pt, posizioni fisse)
+    pdf.set_font("Helvetica", '', 7)
+    pdf.set_xy(x_attuale + 2, y_attuale + 48)
+    pdf.cell(36, 3.5, text=f"N° aut.: {row['ProtocolloEnte']}", align='L')
+    pdf.set_xy(x_attuale + 2, y_attuale + 51.5)
+    pdf.cell(36, 3.5, text=f"Rilascio: {row['DataRilascio']}", align='L')
+    pdf.set_xy(x_attuale + 2, y_attuale + 55)
+    pdf.cell(36, 3.5, text=f"Scadenza: {row['DataScadenza']}", align='L')
 
-    pdf.set_font("Helvetica", '', 8)
-    pdf.set_xy(x_attuale + 2, pdf.get_y() + 6)
-    pdf.multi_cell(36, 3.5, text=descrizione, align='L')
-
+    # SCANSIONARE (6pt italic)
     pdf.set_font("Helvetica", 'I', 6)
-    pdf.set_xy(x_attuale, y_attuale + 60)
+    pdf.set_xy(x_attuale, y_attuale + 61)
     pdf.multi_cell(40, 2.5, text="Scansionare il QR-Code per i dati autorizzativi", align='C')
 
-    pdf.image(qr_path, x=x_attuale + 5, y=y_attuale + 68, w=30)
+    # QR CODE (26mm, centrato)
+    pdf.image(qr_path, x=x_attuale + 7, y=y_attuale + 68, w=26)
 
     contatore_colonna += 1
     if contatore_colonna < 5:
