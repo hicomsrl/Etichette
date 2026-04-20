@@ -1,3 +1,10 @@
+# Artefatti del generatore etichette
+temp_qr/
+etichette_*.pdf
+
+# Stato locale IDE
+.claude/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

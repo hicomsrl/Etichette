@@ -2,22 +2,48 @@ import pandas as pd
 import qrcode
 from fpdf import FPDF
 import os
+import re
+import unicodedata
 
-# --- 1. SCELTA DEL FILE ---
-nome_input = input("Inserisci il nome del file Excel (es. torino.xlsx): ")
-base_name = os.path.splitext(nome_input)[0]
+CSV_URL = (
+    "https://docs.google.com/spreadsheets/d/e/"
+    "2PACX-1vR29_TOKQ4hOFSq8_cJEfi3spPQyoJGeetOVlTy40dv-uncETN_DfKFY38BMsnBvhcVNx6NVv4vrOZg"
+    "/pub?output=csv"
+)
+PAGE_URL = "https://hicomsrl.github.io/Etichette/"
+
+
+def slug(s):
+    s = unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode()
+    return re.sub(r'[^A-Za-z0-9]+', '_', s).strip('_') or 'tutti'
+
 
 try:
-    df = pd.read_excel(nome_input)
+    df = pd.read_csv(CSV_URL)
 except Exception as e:
-    print(f"Errore: Impossibile trovare o leggere {nome_input}.")
+    print(f"Errore: impossibile scaricare il Google Sheet. ({e})")
     exit()
 
-# --- PULIZIA DATE ---
-for col in ['DataRilascio', 'DataScadenza']:
-    df[col] = pd.to_datetime(df[col]).dt.strftime('%d/%m/%Y')
+colonne_richieste = ['Ditta', 'CellulaID', 'Posizione', 'Descrizione',
+                     'Comune', 'ProtocolloEnte', 'DataScadenza']
+mancanti = [c for c in colonne_richieste if c not in df.columns]
+if mancanti:
+    print(f"Errore: colonne mancanti nel Sheet: {', '.join(mancanti)}")
+    exit()
 
-# 2. Setup PDF
+for col in df.columns:
+    if df[col].dtype == 'object':
+        df[col] = df[col].astype(str).str.strip()
+
+filtro = input("Filtro Comune (invio per stampare tutte le cellule): ").strip()
+if filtro:
+    df = df[df['Comune'].str.lower() == filtro.lower()].reset_index(drop=True)
+    if df.empty:
+        print(f"Nessuna cellula trovata per il comune '{filtro}'.")
+        exit()
+
+print(f"Righe da stampare: {len(df)}")
+
 pdf = FPDF(orientation='P', unit='mm', format='A4')
 pdf.set_auto_page_break(auto=True, margin=10)
 pdf.add_page()
@@ -29,48 +55,44 @@ x_attuale, y_attuale = 5, 10
 contatore_colonna = 0
 
 for index, row in df.iterrows():
-    # --- DATI ---
     ditta = str(row['Ditta'])
     cellula_info = f"{row['CellulaID']} - {row['Posizione']}"
     descrizione = str(row['Descrizione'])
-    
-    # --- LOGICA LINK DINAMICO ---
-    # Qui costruiamo il link che la pagina HTML leggerà
-    link_personalizzato = (
-        f"https://riccardobaima.github.io/Etichette/?"
-        f"ditta={ditta}&"
-        f"cellula={cellula_info}&"
-        f"protocollo={row['ProtocolloEnte']}&"
-        f"scadenza={row['DataScadenza']}"
-    ).replace(" ", "%20")
 
-    # --- GENERAZIONE QR ---
-    img = qrcode.make(link_personalizzato)
+    # Il QR contiene SOLO l'id stabile. Gli altri dati li recupera la scheda
+    # web via fetch dal Google Sheet, così aggiornando il Sheet cambiano
+    # anche le etichette già stampate senza rigenerare nulla.
+    link = f"{PAGE_URL}?id={row['CellulaID']}".replace(" ", "%20")
+
+    img = qrcode.make(link)
     qr_path = f"temp_qr/qr_{index}.png"
     img.save(qr_path)
 
-    # --- DISEGNO ETICHETTA ---
-    pdf.rect(x_attuale, y_attuale, 40, 100) 
+    pdf.rect(x_attuale, y_attuale, 40, 100)
 
     if os.path.exists('logo.jpg'):
-        pdf.image('logo.jpg', x=x_attuale + 10, y=y_attuale + 3, w=20)
-    
+        pdf.image('logo.jpg', x=x_attuale + 7, y=y_attuale + 3, w=26)
+
     pdf.set_font("Helvetica", 'B', 9)
     pdf.set_xy(x_attuale, y_attuale + 18)
-    pdf.multi_cell(40, 5, text=ditta, align='C')
-    
+    pdf.multi_cell(40, 4, text=ditta, align='C')
+    y_dopo_ditta = pdf.get_y() + 2
+
     pdf.set_font("Helvetica", 'B', 10)
-    pdf.set_xy(x_attuale + 2, y_attuale + 32) 
+    pdf.set_xy(x_attuale + 2, y_dopo_ditta)
+    pdf.multi_cell(36, 5, text=f"Comune: {row['Comune']}", align='L')
+    y_dopo_comune = pdf.get_y() + 1
+
+    pdf.set_font("Helvetica", 'B', 10)
+    pdf.set_xy(x_attuale + 2, y_dopo_comune)
     pdf.cell(36, 5, text=f"Cellula: {cellula_info}", align='L')
-        
+
     pdf.set_font("Helvetica", '', 8)
-    pdf.set_xy(x_attuale + 2, y_attuale + 40)
-    pdf.multi_cell(36, 4, text=descrizione, align='L')
-    
-    # Inserimento del QR generato col link
+    pdf.set_xy(x_attuale + 2, pdf.get_y() + 6)
+    pdf.multi_cell(36, 3.5, text=descrizione, align='L')
+
     pdf.image(qr_path, x=x_attuale + 5, y=y_attuale + 68, w=30)
 
-    # Logica Griglia
     contatore_colonna += 1
     if contatore_colonna < 5:
         x_attuale += 40
@@ -82,6 +104,7 @@ for index, row in df.iterrows():
             pdf.add_page()
             y_attuale = 10
 
-nome_output = f"etichette_{base_name}.pdf"
+nome_base = slug(filtro) if filtro else 'tutti'
+nome_output = f"etichette_{nome_base}.pdf"
 pdf.output(nome_output)
 print(f"PDF GENERATO: {nome_output}")

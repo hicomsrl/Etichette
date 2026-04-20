@@ -14,36 +14,105 @@
         .value { font-size: 17px; color: #34495e; display: block; margin-bottom: 12px; font-weight: bold; border-bottom: 1px solid #dcdde1; padding-bottom: 5px; }
         .value:last-child { border-bottom: none; }
         .btn { display: inline-block; padding: 12px 25px; background: #27ae60; color: white; text-decoration: none; border-radius: 30px; font-weight: bold; margin-top: 10px; }
+        .status { color: #7f8c8d; font-style: italic; margin: 20px 0; }
+        .status.error { color: #c0392b; font-style: normal; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
         <img src="logo.jpg" alt="Logo">
         <h1>Scheda Informativa</h1>
-        
-        <div class="info-box">
+
+        <div id="status" class="status">Caricamento dati…</div>
+
+        <div id="info" class="info-box" style="display:none">
             <span class="label">Proprietario / Ditta</span>
             <span id="ditta" class="value">---</span>
-            
+
+            <span class="label">Comune</span>
+            <span id="comune" class="value">---</span>
+
             <span class="label">ID Cellula e Posizione</span>
             <span id="cellula" class="value">---</span>
 
             <span class="label">Numero Autorizzazione</span>
             <span id="protocollo" class="value">---</span>
-            
+
             <span class="label">Scadenza Autorizzazione</span>
             <span id="scadenza" class="value">---</span>
         </div>
 
-        <a href="mailto:assistenza@tuaazienda.it" class="btn">Richiedi Assistenza</a>
+        <a href="mailto:autorizzazioni@hi-com.eu" class="btn">Richiedi Assistenza</a>
     </div>
 
     <script>
-        const params = new URLSearchParams(window.location.search);
-        document.getElementById('ditta').innerText = params.get('ditta') || "---";
-        document.getElementById('cellula').innerText = params.get('cellula') || "---";
-        document.getElementById('protocollo').innerText = params.get('protocollo') || "---";
-        document.getElementById('scadenza').innerText = params.get('scadenza') || "---";
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR29_TOKQ4hOFSq8_cJEfi3spPQyoJGeetOVlTy40dv-uncETN_DfKFY38BMsnBvhcVNx6NVv4vrOZg/pub?output=csv";
+
+        // Parser CSV minimale che gestisce campi quotati e virgole interne.
+        function parseCSV(text) {
+            const rows = [];
+            let row = [], field = '', inQuotes = false, i = 0;
+            while (i < text.length) {
+                const c = text[i];
+                if (inQuotes) {
+                    if (c === '"') {
+                        if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+                        inQuotes = false; i++;
+                    } else { field += c; i++; }
+                } else {
+                    if (c === '"') { inQuotes = true; i++; }
+                    else if (c === ',') { row.push(field); field = ''; i++; }
+                    else if (c === '\r') { i++; }
+                    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; }
+                    else { field += c; i++; }
+                }
+            }
+            if (field !== '' || row.length > 0) { row.push(field); rows.push(row); }
+            return rows;
+        }
+
+        function showError(msg) {
+            const s = document.getElementById('status');
+            s.textContent = msg;
+            s.classList.add('error');
+        }
+
+        async function load() {
+            const id = (new URLSearchParams(window.location.search).get('id') || '').trim();
+            if (!id) { showError('ID cellula mancante nell\'URL.'); return; }
+
+            try {
+                // Cache-bust: aggira la cache CDN di Google (≈5 min).
+                const resp = await fetch(`${CSV_URL}&_=${Date.now()}`, { cache: 'no-store' });
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const rows = parseCSV(await resp.text());
+                const header = rows.shift();
+                if (!header) throw new Error('Sheet vuoto.');
+
+                const col = Object.fromEntries(header.map((h, i) => [h.trim(), i]));
+                if (col['CellulaID'] === undefined) throw new Error('Colonna CellulaID assente.');
+
+                const record = rows.find(r => (r[col['CellulaID']] || '').trim() === id);
+                if (!record) { showError(`Cellula "${id}" non trovata.`); return; }
+
+                const get = (name) => {
+                    const i = col[name];
+                    return i !== undefined && record[i] ? record[i].trim() : '---';
+                };
+
+                document.getElementById('ditta').textContent = get('Ditta');
+                document.getElementById('comune').textContent = get('Comune');
+                document.getElementById('cellula').textContent = `${get('CellulaID')} - ${get('Posizione')}`;
+                document.getElementById('protocollo').textContent = get('ProtocolloEnte');
+                document.getElementById('scadenza').textContent = get('DataScadenza');
+
+                document.getElementById('status').style.display = 'none';
+                document.getElementById('info').style.display = '';
+            } catch (err) {
+                showError(`Errore caricamento dati: ${err.message}`);
+            }
+        }
+        load();
     </script>
 </body>
 </html>
