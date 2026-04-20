@@ -103,22 +103,13 @@ for index, row in df.iterrows():
     pdf.set_xy(x_attuale + 2, y_attuale + 38)
     pdf.multi_cell(36, 3, text=descrizione, align='L')
 
-    # BLOCCO AUTORIZZAZIONE (7pt, posizioni fisse)
-    pdf.set_font("Helvetica", '', 7)
-    pdf.set_xy(x_attuale + 2, y_attuale + 48)
-    pdf.cell(36, 3.5, text=f"N° aut.: {row['ProtocolloEnte']}", align='L')
-    pdf.set_xy(x_attuale + 2, y_attuale + 51.5)
-    pdf.cell(36, 3.5, text=f"Rilascio: {row['DataRilascio']}", align='L')
-    pdf.set_xy(x_attuale + 2, y_attuale + 55)
-    pdf.cell(36, 3.5, text=f"Scadenza: {row['DataScadenza']}", align='L')
+    # SCANSIONARE (8pt italic, 2 righe)
+    pdf.set_font("Helvetica", 'I', 8)
+    pdf.set_xy(x_attuale, y_attuale + 50)
+    pdf.multi_cell(40, 3.5, text="Scansionare il QR-Code per gli estremi autorizzativi", align='C')
 
-    # SCANSIONARE (6pt italic)
-    pdf.set_font("Helvetica", 'I', 6)
-    pdf.set_xy(x_attuale, y_attuale + 61)
-    pdf.multi_cell(40, 2.5, text="Scansionare il QR-Code per i dati autorizzativi", align='C')
-
-    # QR CODE (26mm, centrato)
-    pdf.image(qr_path, x=x_attuale + 7, y=y_attuale + 68, w=26)
+    # QR CODE (30mm, centrato)
+    pdf.image(qr_path, x=x_attuale + 5, y=y_attuale + 68, w=30)
 
     contatore_colonna += 1
     if contatore_colonna < 5:
