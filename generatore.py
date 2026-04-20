@@ -101,6 +101,10 @@ for index, row in df.iterrows():
     pdf.set_xy(x_attuale + 2, pdf.get_y() + 6)
     pdf.multi_cell(36, 3.5, text=descrizione, align='L')
 
+    pdf.set_font("Helvetica", 'I', 6)
+    pdf.set_xy(x_attuale, y_attuale + 60)
+    pdf.multi_cell(40, 2.5, text="Scansionare il QR-Code per i dati autorizzativi", align='C')
+
     pdf.image(qr_path, x=x_attuale + 5, y=y_attuale + 68, w=30)
 
     contatore_colonna += 1
