@@ -1,6 +1,6 @@
 # Artefatti del generatore etichette
 temp_qr/
-etichette_*.pdf
+*.pdf
 
 # Stato locale IDE
 .claude/
@@ -129,3 +129,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
