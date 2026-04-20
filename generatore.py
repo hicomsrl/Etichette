@@ -90,6 +90,11 @@ for index, row in df.iterrows():
 
     pdf.set_font("Helvetica", 'B', 10)
     pdf.set_xy(x_attuale + 2, y_dopo_ditta)
+    pdf.multi_cell(36, 5, text=f"Ente: {row['Ente']}", align='L')
+    y_dopo_ente = pdf.get_y() + 1
+
+    pdf.set_font("Helvetica", 'B', 10)
+    pdf.set_xy(x_attuale + 2, y_dopo_ente)
     pdf.multi_cell(36, 5, text=f"Comune: {row['Comune']}", align='L')
     y_dopo_comune = pdf.get_y() + 1
 
