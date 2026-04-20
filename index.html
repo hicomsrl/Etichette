@@ -26,19 +26,28 @@
         <div id="status" class="status">Caricamento dati…</div>
 
         <div id="info" class="info-box" style="display:none">
-            <span class="label">Proprietario / Ditta</span>
+            <span class="label">Ditta</span>
             <span id="ditta" class="value">---</span>
+
+            <span class="label">Ente autorizzante</span>
+            <span id="ente" class="value">---</span>
 
             <span class="label">Comune</span>
             <span id="comune" class="value">---</span>
 
-            <span class="label">ID Cellula e Posizione</span>
+            <span class="label">Indirizzo</span>
+            <span id="indirizzo" class="value">---</span>
+
+            <span class="label">Cellula (ID + Posizione)</span>
             <span id="cellula" class="value">---</span>
 
-            <span class="label">Numero Autorizzazione</span>
+            <span class="label">N° autorizzazione</span>
             <span id="protocollo" class="value">---</span>
 
-            <span class="label">Scadenza Autorizzazione</span>
+            <span class="label">Data rilascio</span>
+            <span id="rilascio" class="value">---</span>
+
+            <span class="label">Scadenza autorizzazione</span>
             <span id="scadenza" class="value">---</span>
         </div>
 
@@ -79,7 +88,7 @@
 
         async function load() {
             const id = (new URLSearchParams(window.location.search).get('id') || '').trim();
-            if (!id) { showError('ID cellula mancante nell\'URL.'); return; }
+            if (!id) { showError('Etichetta non valida (ID mancante).'); return; }
 
             try {
                 // Cache-bust: aggira la cache CDN di Google (≈5 min).
@@ -90,10 +99,10 @@
                 if (!header) throw new Error('Sheet vuoto.');
 
                 const col = Object.fromEntries(header.map((h, i) => [h.trim(), i]));
-                if (col['CellulaID'] === undefined) throw new Error('Colonna CellulaID assente.');
+                if (col['QRID'] === undefined) throw new Error('Colonna QRID assente.');
 
-                const record = rows.find(r => (r[col['CellulaID']] || '').trim() === id);
-                if (!record) { showError(`Cellula "${id}" non trovata.`); return; }
+                const record = rows.find(r => (r[col['QRID']] || '').trim() === id);
+                if (!record) { showError(`Etichetta "${id}" non trovata.`); return; }
 
                 const get = (name) => {
                     const i = col[name];
@@ -101,9 +110,12 @@
                 };
 
                 document.getElementById('ditta').textContent = get('Ditta');
+                document.getElementById('ente').textContent = get('Ente');
                 document.getElementById('comune').textContent = get('Comune');
+                document.getElementById('indirizzo').textContent = get('Descrizione');
                 document.getElementById('cellula').textContent = `${get('CellulaID')} - ${get('Posizione')}`;
                 document.getElementById('protocollo').textContent = get('ProtocolloEnte');
+                document.getElementById('rilascio').textContent = get('DataRilascio');
                 document.getElementById('scadenza').textContent = get('DataScadenza');
 
                 document.getElementById('status').style.display = 'none';

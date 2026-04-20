@@ -24,8 +24,9 @@ except Exception as e:
     print(f"Errore: impossibile scaricare il Google Sheet. ({e})")
     exit()
 
-colonne_richieste = ['Ditta', 'CellulaID', 'Posizione', 'Descrizione',
-                     'Comune', 'ProtocolloEnte', 'DataScadenza']
+colonne_richieste = ['QRID', 'Ditta', 'Ente', 'Comune', 'CellulaID',
+                     'Posizione', 'Descrizione', 'ProtocolloEnte',
+                     'DataRilascio', 'DataScadenza']
 mancanti = [c for c in colonne_richieste if c not in df.columns]
 if mancanti:
     print(f"Errore: colonne mancanti nel Sheet: {', '.join(mancanti)}")
@@ -34,6 +35,12 @@ if mancanti:
 for col in df.columns:
     if df[col].dtype == 'object':
         df[col] = df[col].astype(str).str.strip()
+
+# Scarta righe senza QRID (non ancora processate dall'Apps Script del Sheet)
+senza_qrid = df['QRID'].isna() | (df['QRID'].astype(str).str.strip() == '')
+if senza_qrid.any():
+    print(f"Attenzione: {senza_qrid.sum()} righe senza QRID verranno saltate.")
+    df = df[~senza_qrid].reset_index(drop=True)
 
 filtro = input("Filtro Comune (invio per stampare tutte le cellule): ").strip()
 if filtro:
@@ -59,10 +66,13 @@ for index, row in df.iterrows():
     cellula_info = f"{row['CellulaID']} - {row['Posizione']}"
     descrizione = str(row['Descrizione'])
 
-    # Il QR contiene SOLO l'id stabile. Gli altri dati li recupera la scheda
-    # web via fetch dal Google Sheet, così aggiornando il Sheet cambiano
-    # anche le etichette già stampate senza rigenerare nulla.
-    link = f"{PAGE_URL}?id={row['CellulaID']}".replace(" ", "%20")
+    # Il QR contiene SOLO il QRID stabile (univoco per riga, assegnato e
+    # mai modificato dall'Apps Script del Sheet). Gli altri dati li recupera
+    # la scheda web via fetch al momento della scansione.
+    qrid = str(row['QRID']).strip()
+    if qrid.endswith('.0'):  # pandas interpreta numeri interi come float
+        qrid = qrid[:-2]
+    link = f"{PAGE_URL}?id={qrid}"
 
     img = qrcode.make(link)
     qr_path = f"temp_qr/qr_{index}.png"
